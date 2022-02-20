@@ -32,7 +32,7 @@ def arg_parser():
 
 
 # Основной класс сервера
-class Server(metaclass=ServerMaker):  # threading.Thread,
+class Server(threading.Thread, metaclass=ServerMaker):
     port = Port()
 
     def __init__(self, listen_address, listen_port, database):
@@ -52,6 +52,9 @@ class Server(metaclass=ServerMaker):  # threading.Thread,
         # Словарь содержащий сопоставленные имена и соответствующие им сокеты.
         self.names = dict()
 
+        # Конструктор предка
+        super().__init__()
+
     def init_socket(self):
         logger.info(
             f'Запущен сервер, порт для подключений: {self.port}, '
@@ -66,12 +69,13 @@ class Server(metaclass=ServerMaker):  # threading.Thread,
         self.sock = transport
         self.sock.listen()
 
-    def start(self):
+    def run(self):
         # Инициализация Сокета
         self.init_socket()
 
         # Основной цикл программы сервера
         while True:
+
             # Ждём подключения, если таймаут вышел, ловим исключение.
             try:
                 client, client_address = self.sock.accept()
@@ -150,9 +154,9 @@ class Server(metaclass=ServerMaker):  # threading.Thread,
         # Если клиент выходит
         elif ACTION in message and message[ACTION] == EXIT and ACCOUNT_NAME in message:
             self.database.user_logout(message[ACCOUNT_NAME])
-            self.clients.remove(self.names[ACCOUNT_NAME])
-            self.names[ACCOUNT_NAME].close()
-            del self.names[ACCOUNT_NAME]
+            self.clients.remove(self.names[message[ACCOUNT_NAME]])
+            self.names[message[ACCOUNT_NAME]].close()
+            del self.names[message[ACCOUNT_NAME]]
             return
         # Иначе отдаём Bad request
         else:
@@ -172,13 +176,6 @@ def print_help():
 
 
 def main():
-    # # Загрузка параметров командной строки, если нет параметров, то задаём значения по умоланию.
-    # listen_address, listen_port = arg_parser()
-    #
-    # # Создание экземпляра класса - сервера.
-    # server = Server(listen_address, listen_port)
-    # server.main_loop()
-
     # Загрузка параметров командной строки, если нет параметров, то задаём значения по умолчанию.
     listen_address, listen_port = arg_parser()
 
