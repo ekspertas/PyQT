@@ -9,11 +9,10 @@ import select
 import time
 import threading
 import logs.config_server_log
-from errors import IncorrectDataRecivedError
 from common.variables import *
 from common.utils import *
-from decos import log
-from descrptrs import Port
+from common.decos import log
+from descryptors import Port
 from metaclasses import ServerMaker
 from server_database import ServerStorage
 from PyQt5.QtWidgets import QApplication, QMessageBox
@@ -83,11 +82,11 @@ class Server(threading.Thread, metaclass=ServerMaker):
 
     def run(self):
         # Инициализация Сокета
+        global new_connection
         self.init_socket()
 
         # Основной цикл программы сервера
         while True:
-
             # Ждём подключения, если таймаут вышел, ловим исключение.
             try:
                 client, client_address = self.sock.accept()
@@ -103,7 +102,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
             # Проверяем на наличие ждущих клиентов
             try:
                 if self.clients:
-                    recv_data_lst, send_data_lst, err_lst = select.select(self.clients, self.clients, [], 0)
+                    recv_data_lst, send_data_lst, err_lst = select.select(self.clients,
+                                                                          self.clients, [], 0)
             except OSError as err:
                 logger.error(f'Ошибка работы с сокетами: {err}')
 
@@ -224,21 +224,26 @@ class Server(threading.Thread, metaclass=ServerMaker):
             return
 
 
-# def print_help():
-#     print('Поддерживаемые комманды:')
-#     print('users - список известных пользователей')
-#     print('connected - список подключённых пользователей')
-#     print('loghist - история входов пользователя')
-#     print('exit - завершение работы сервера.')
-#     print('help - вывод справки по поддерживаемым командам')
+# Загрузка файла конфигурации
+def config_load():
+    config = configparser.ConfigParser()
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    config.read(f"{dir_path}/{'server.ini'}")
+    # Если конфиг файл загружен правильно, запускаемся, иначе конфиг по умолчанию.
+    if 'SETTINGS' in config:
+        return config
+    else:
+        config.add_section('SETTINGS')
+        config.set('SETTINGS', 'Default_port', str(DEFAULT_PORT))
+        config.set('SETTINGS', 'Listen_Address', '')
+        config.set('SETTINGS', 'Database_path', '')
+        config.set('SETTINGS', 'Database_file', 'server_database.db3')
+        return config
 
 
 def main():
     # Загрузка файла конфигурации сервера
-    config = configparser.ConfigParser()
-
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    config.read(f"{dir_path}/{'server.ini'}")
+    config = config_load()
 
     # Загрузка параметров командной строки, если нет параметров, то задаём значения по умолчанию.
     listen_address, listen_port = arg_parser(
