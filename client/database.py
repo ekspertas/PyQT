@@ -23,9 +23,9 @@ class ClientDatabase:
             self.username = user
 
     class MessageStat:
-        '''
+        """
         Класс - отображение для таблицы статистики переданных сообщений.
-        '''
+        """
         def __init__(self, contact, direction, message):
             self.id = None
             self.contact = contact
@@ -34,9 +34,9 @@ class ClientDatabase:
             self.date = datetime.datetime.now()
 
     class Contacts:
-        '''
+        """
         Класс - отображение для таблицы контактов.
-        '''
+        """
         def __init__(self, contact):
             self.id = None
             self.name = contact
@@ -172,7 +172,7 @@ class ClientDatabase:
 if __name__ == '__main__':
     test_db = ClientDatabase('test1')
     for i in ['test3', 'test4', 'test5']:
-       test_db.add_contact(i)
+        test_db.add_contact(i)
     test_db.add_contact('test4')
     test_db.add_users(['test1', 'test2', 'test3', 'test4', 'test5'])
     test_db.save_message('test2', 'in', f'Привет! я тестовое сообщение от {datetime.datetime.now()}!')

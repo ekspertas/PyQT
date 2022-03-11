@@ -1,9 +1,9 @@
 import socket
 import logging
 import sys
-sys.path.append('../')
 import logs.config_client_log
 import logs.config_server_log
+sys.path.append('../')
 
 
 # метод определения модуля, источника запуска.

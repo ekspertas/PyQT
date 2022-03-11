@@ -7,12 +7,13 @@ import hmac
 import binascii
 import os
 import sys
-sys.path.append('../')
 from common.metaclasses import ServerMaker
 from common.descryptors import Port
 from common.variables import *
 from common.utils import send_message, get_message
 from common.decos import login_required
+
+sys.path.append('../')
 
 # Загрузка логера
 logger = logging.getLogger('server_dist')
@@ -54,7 +55,7 @@ class MessageProcessor(threading.Thread):
         super().__init__()
 
     def run(self):
-        '''Метод основной цикл потока.'''
+        """Метод основной цикл потока."""
         # Инициализация Сокета
         self.init_socket()
 
@@ -92,10 +93,10 @@ class MessageProcessor(threading.Thread):
                         self.remove_client(client_with_message)
 
     def remove_client(self, client):
-        '''
+        """
         Метод обработчик клиента с которым прервана связь.
         Ищет клиента и удаляет его из списков и базы:
-        '''
+        """
         logger.info(f'Клиент {client.getpeername()} отключился от сервера.')
         for name in self.names:
             if self.names[name] == client:
@@ -106,9 +107,10 @@ class MessageProcessor(threading.Thread):
         client.close()
 
     def init_socket(self):
-        '''Метод инициализатор сокета.'''
+        """Метод инициализатор сокета."""
         logger.info(
-            f'Запущен сервер, порт для подключений: {self.port} , адрес с которого принимаются подключения: {self.addr}. Если адрес не указан, принимаются соединения с любых адресов.')
+            f'Запущен сервер, порт для подключений: {self.port} , адрес с которого принимаются '
+            f'подключения: {self.addr}. Если адрес не указан, принимаются соединения с любых адресов.')
         # Готовим сокет
         transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         transport.bind((self.addr, self.port))
@@ -119,11 +121,11 @@ class MessageProcessor(threading.Thread):
         self.sock.listen(MAX_CONNECTIONS)
 
     def process_message(self, message):
-        '''
+        """
         Метод отправки сообщения клиенту.
-        '''
-        if message[DESTINATION] in self.names and self.names[message[DESTINATION]
-        ] in self.listen_sockets:
+        """
+        if message[DESTINATION] in self.names and self.names[message[DESTINATION]] \
+                in self.listen_sockets:
             try:
                 send_message(self.names[message[DESTINATION]], message)
                 logger.info(
@@ -143,13 +145,21 @@ class MessageProcessor(threading.Thread):
         """ Метод обработчик поступающих сообщений. """
         logger.debug(f'Разбор сообщения от клиента : {message}')
         # Если это сообщение о присутствии, принимаем и отвечаем
-        if ACTION in message and message[ACTION] == PRESENCE and TIME in message and USER in message:
+        if ACTION in message \
+                and message[ACTION] == PRESENCE \
+                and TIME in message \
+                and USER in message:
             # Если сообщение о присутствии то вызываем функцию авторизации.
             self.autorize_user(message, client)
 
         # Если это сообщение, то отправляем его получателю.
-        elif ACTION in message and message[ACTION] == MESSAGE and DESTINATION in message and TIME in message \
-                and SENDER in message and MESSAGE_TEXT in message and self.names[message[SENDER]] == client:
+        elif ACTION in message \
+                and message[ACTION] == MESSAGE \
+                and DESTINATION in message \
+                and TIME in message \
+                and SENDER in message \
+                and MESSAGE_TEXT in message \
+                and self.names[message[SENDER]] == client:
             if message[DESTINATION] in self.names:
                 self.database.process_message(
                     message[SENDER], message[DESTINATION])
@@ -168,12 +178,16 @@ class MessageProcessor(threading.Thread):
             return
 
         # Если клиент выходит
-        elif ACTION in message and message[ACTION] == EXIT and ACCOUNT_NAME in message \
+        elif ACTION in message \
+                and message[ACTION] == EXIT \
+                and ACCOUNT_NAME in message \
                 and self.names[message[ACCOUNT_NAME]] == client:
             self.remove_client(client)
 
         # Если это запрос контакт-листа
-        elif ACTION in message and message[ACTION] == GET_CONTACTS and USER in message and \
+        elif ACTION in message \
+                and message[ACTION] == GET_CONTACTS \
+                and USER in message and \
                 self.names[message[USER]] == client:
             response = RESPONSE_202
             response[LIST_INFO] = self.database.get_contacts(message[USER])
@@ -183,7 +197,10 @@ class MessageProcessor(threading.Thread):
                 self.remove_client(client)
 
         # Если это добавление контакта
-        elif ACTION in message and message[ACTION] == ADD_CONTACT and ACCOUNT_NAME in message and USER in message \
+        elif ACTION in message \
+                and message[ACTION] == ADD_CONTACT \
+                and ACCOUNT_NAME in message \
+                and USER in message \
                 and self.names[message[USER]] == client:
             self.database.add_contact(message[USER], message[ACCOUNT_NAME])
             try:
@@ -192,7 +209,10 @@ class MessageProcessor(threading.Thread):
                 self.remove_client(client)
 
         # Если это удаление контакта
-        elif ACTION in message and message[ACTION] == REMOVE_CONTACT and ACCOUNT_NAME in message and USER in message \
+        elif ACTION in message \
+                and message[ACTION] == REMOVE_CONTACT \
+                and ACCOUNT_NAME in message \
+                and USER in message \
                 and self.names[message[USER]] == client:
             self.database.remove_contact(message[USER], message[ACCOUNT_NAME])
             try:
@@ -201,18 +221,21 @@ class MessageProcessor(threading.Thread):
                 self.remove_client(client)
 
         # Если это запрос известных пользователей
-        elif ACTION in message and message[ACTION] == USERS_REQUEST and ACCOUNT_NAME in message \
+        elif ACTION in message \
+                and message[ACTION] == USERS_REQUEST \
+                and ACCOUNT_NAME in message \
                 and self.names[message[ACCOUNT_NAME]] == client:
             response = RESPONSE_202
-            response[LIST_INFO] = [user[0]
-                                   for user in self.database.users_list()]
+            response[LIST_INFO] = [user[0] for user in self.database.users_list()]
             try:
                 send_message(client, response)
             except OSError:
                 self.remove_client(client)
 
         # Если это запрос публичного ключа пользователя
-        elif ACTION in message and message[ACTION] == PUBLIC_KEY_REQUEST and ACCOUNT_NAME in message:
+        elif ACTION in message \
+                and message[ACTION] == PUBLIC_KEY_REQUEST \
+                and ACCOUNT_NAME in message:
             response = RESPONSE_511
             response[DATA] = self.database.get_pubkey(message[ACCOUNT_NAME])
             # может быть, что ключа ещё нет (пользователь никогда не логинился,
@@ -290,8 +313,9 @@ class MessageProcessor(threading.Thread):
             client_digest = binascii.a2b_base64(ans[DATA])
             # Если ответ клиента корректный, то сохраняем его в список
             # пользователей.
-            if RESPONSE in ans and ans[RESPONSE] == 511 and \
-                    hmac.compare_digest(digest, client_digest):
+            if RESPONSE in ans \
+                    and ans[RESPONSE] == 511 \
+                    and hmac.compare_digest(digest, client_digest):
                 self.names[message[USER][ACCOUNT_NAME]] = sock
                 client_ip, client_port = sock.getpeername()
                 try:
@@ -316,7 +340,7 @@ class MessageProcessor(threading.Thread):
                 sock.close()
 
     def service_update_lists(self):
-        '''Метод реализующий отправки сервисного сообщения 205 клиентам.'''
+        """Метод реализующий отправки сервисного сообщения 205 клиентам."""
         for client in self.names:
             try:
                 send_message(self.names[client], RESPONSE_205)
