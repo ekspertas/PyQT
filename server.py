@@ -3,16 +3,16 @@ import os
 import argparse
 import logging
 import configparser
-import logs.config_server_log
 
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt
+import logs.config_server_log
 from common.variables import *
 from common.utils import *
 from common.decos import log
 from server.core import MessageProcessor
 from server.database import ServerStorage
 from server.main_window import MainWindow
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt
 
 # Инициализация логирования сервера.
 logger = logging.getLogger('server_dist')
@@ -40,7 +40,7 @@ def config_load():
     """Парсер конфигурационного ini файла."""
     config = configparser.ConfigParser()
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    config.read(f"{dir_path}/{'server_dist+++.ini'}")
+    config.read(f"{dir_path}/{'server.ini'}")
     # Если конфиг файл загружен правильно, запускаемся, иначе конфиг по
     # умолчанию.
     if 'SETTINGS' in config:
@@ -56,7 +56,7 @@ def config_load():
 
 @log
 def main():
-    '''Основная функция'''
+    """Основная функция"""
     # Загрузка файла конфигурации сервера
     config = config_load()
 

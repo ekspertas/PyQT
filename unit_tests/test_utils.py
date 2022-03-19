@@ -1,25 +1,25 @@
 import sys
-sys.path.append('../')
 from common.utils import *
 from common.variables import *
 import unittest
-from errors import NonDictInputError
+from common.errors import NonDictInputError
+sys.path.append('../')
 
 
 # Тестовый класс для тестирования отпраки и получения, при создании требует словарь, который будет прогонятся
 # через тестовую функцию
 class TestSocket:
     def __init__(self, test_dict):
-        self.testdict = test_dict
+        self.test_dict = test_dict
 
     # тестовая функция отправки, корретно  кодирует сообщение, так-же сохраняет что должно было отправлено в сокет.
     def send(self, message_to_send):
-        json_test_message = json.dumps(self.testdict)
+        json_test_message = json.dumps(self.test_dict)
         self.encoded_message = json_test_message.encode(ENCODING)
         self.receved_message = message_to_send
 
     def recv(self, max_len):
-        json_test_message = json.dumps(self.testdict)
+        json_test_message = json.dumps(self.test_dict)
         return json_test_message.encode(ENCODING)
 
 
@@ -44,7 +44,8 @@ class Tests(unittest.TestCase):
         test_socket = TestSocket(self.test_dict_send)
         # вызов тестируемой функции, результаты будут сохранены в тестовом сокете
         send_message(test_socket, self.test_dict_send)
-        # проверка корретности кодирования словаря. сравниваем результат довренного кодирования и результат от тестируемой функции
+        # проверка корретности кодирования словаря. сравниваем результат довренного кодирования и результат от
+        # тестируемой функции
         self.assertEqual(test_socket.encoded_message, test_socket.receved_message)
         # дополнительно, проверим генерацию исключения, при не словаре на входе.
         self.assertRaises(NonDictInputError, send_message, test_socket, 1111)
